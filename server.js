@@ -31,6 +31,40 @@ http.createServer(async (req, res) => {
   if (p === '/api/notes/del' && req.method === 'POST') { const d = await body(req); return json(res, { ok: notes.del(d.id, d.nid) }); }
   if (p === '/api/pages' && req.method === 'GET') return json(res, { ok: true, pages: pages.list() });
 
+  // 「叫 AI 来看」——**不写死任何一家模型**。
+  // 设环境变量 SB_AGENT 指向一条命令，页面 id 会作为参数传进去，
+  // 同时给到 SB_PAGE_ID / SB_PAGE_FILE / SB_BASE 三个环境变量。
+  //   SB_AGENT='claude -p'                     # 任何能读文件、能发 HTTP 的 agent
+  //   SB_AGENT='python my_agent.py'
+  // 不设就是纯人用的手帐，这个按钮不出现。
+  if (p === '/api/review' && req.method === 'POST') {
+    const d = await body(req);
+    if (!process.env.SB_AGENT) return json(res, { ok: false, error: 'no SB_AGENT' });
+    if (!pages.html(d.id)) return json(res, { ok: false, error: 'no page' });
+    const { spawn } = require('child_process');
+    const base = 'http://localhost:' + (process.env.PORT || 4321);
+    const brief = [
+      '有人在手帐的一页上贴了批注，叫你来看。',
+      '页面 id：' + d.id + '，文件：' + pages.file(d.id),
+      '她贴的东西：GET ' + base + '/api/notes?id=' + d.id,
+      '每条的 anchor 是她贴在哪一块内容旁边（对应页面里的 data-block）——',
+      '先弄清楚她在对什么说话，那才是她的意思。',
+      '回话：POST ' + base + '/api/notes',
+      '  {"id":"' + d.id + '","by":"ai","kind":"note","text":"…","anchor":"<data-block 或 note:她那条的id>"}',
+      'anchor 写 note:<id> 就是直接回她那一条，贴在她旁边。想回哪条回哪条，不必每条都回。',
+      '你也可以直接重写 ' + pages.file(d.id) + ' —— 她贴的东西存在别处，不会被你覆盖。',
+    ].join('\n');
+    const child = spawn(process.env.SB_AGENT, [d.id], {
+      shell: true, stdio: ['pipe', 'inherit', 'inherit'],
+      env: Object.assign({}, process.env, { SB_PAGE_ID: d.id, SB_PAGE_FILE: pages.file(d.id), SB_BASE: base }),
+    });
+    child.stdin.write(brief); child.stdin.end();
+    child.on('error', (e) => console.error('[agent]', e.message));
+    return json(res, { ok: true, started: true });
+  }
+
+  if (p === '/api/config' && req.method === 'GET') return json(res, { ok: true, agent: !!process.env.SB_AGENT });
+
   // 开一页空白 —— **这就是"读者自己做的一页"**：没有作者内容，
   // 整页都是她贴出来的（批注层本来就支持不挂任何内容块，钉在纸上）。
   // 所以两边用的是同一套东西，不需要第二个编辑器。
