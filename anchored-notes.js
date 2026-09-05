@@ -188,10 +188,10 @@
   function callBtn() {
     var b = document.querySelector('.sbn-call');
     if (b) return b;
-    b = el('button', 'sbn-call'); b.textContent = '叫 Claude 来看';
+    b = el('button', 'sbn-call'); b.textContent = '叫 AI 来看';
     b.onclick = function () {
       b.disabled = true; b.textContent = '叫了，等他…';
-      fetch(CFG.review, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      fetch(CFG.review || '/api/review', { method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: ID }) })
         .then(function (r) { return r.json(); })
         .then(function (d) {
@@ -207,10 +207,10 @@
                   b.textContent = '他回了'; setTimeout(function () { b.remove(); }, 2600);
                 }
               });
-            if (tries > 60) { clearInterval(t); b.disabled = false; b.textContent = '叫 Claude 来看'; }
+            if (tries > 60) { clearInterval(t); b.disabled = false; b.textContent = '叫 AI 来看'; }
           }, 4000);
         })
-        .catch(function () { b.disabled = false; b.textContent = '叫 Claude 来看'; });
+        .catch(function () { b.disabled = false; b.textContent = '叫 AI 来看'; });
     };
     document.body.appendChild(b);
     return b;
@@ -243,8 +243,9 @@
     }
     if (kind === 'sticker') {
       // 两个库长得不一样，别弄混（2026-09-06 混过一次，她看到一屏破图）：
-      //   /api/mystickers  她的私藏 → {id, ext}，图在 /my-stickers/<id>.<ext>
-      //   /api/stickers    公共库   → {url} 直接就是地址
+      // 贴纸库是**可选的、要自己接**：CFG.stickers 指向一个 GET，
+      // 回 {list:[{url,tag}]} 就行。tag 是人写的描述（"猫咪/亲亲/抱住亲亲"），
+      // 贴的时候会跟着一起存 —— 这样读这一页的人/AI 不用看图也知道贴的是什么。
       if (!CFG.stickers) { alert('没配贴纸库'); return; }
       fetch(CFG.stickers).then(function (r) { return r.json(); }).then(function (d) {
         var list = ((d && (d.list || d.stickers)) || [])
@@ -391,7 +392,10 @@
       notes = (d && d.notes) || [];
       style();
       fab();                       // 一条都没有时也得能贴（第一版在这儿 return 了）
-      callBtn();                   // 「叫 Claude 来看」—— 她按按钮我才来，不定时扑上去
+      // 「叫 AI 来看」的按钮只在服务端真的配了 agent 时才出现 ——
+      // 没配就是纯人用的手帐，别给一个按了没反应的按钮。
+      fetch('/api/config').then(function (r) { return r.json(); })
+        .then(function (c) { if (c && c.agent) callBtn(); }).catch(function () {});
       // 等字体和图都稳定了再定位，否则量到的是旧盒子
       if (document.fonts && document.fonts.ready) document.fonts.ready.then(render); else render();
       addEventListener('load', render);
