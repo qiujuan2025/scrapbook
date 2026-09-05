@@ -1,0 +1,46 @@
+<!doctype html><html lang="zh"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>手帐</title>
+<style>
+  :root{--bg:#efe9dd;--card:#faf7f0;--line:#ddd4c2;--text:#2f2c26;--dim:#8b8375}
+  @media (prefers-color-scheme:dark){:root{--bg:#211f1c;--card:#2b2926;--line:#3d3a35;--text:#efe9dd;--dim:#9a9186}}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font:16px/1.7 system-ui,-apple-system,sans-serif}
+  .wrap{max-width:720px;margin:0 auto;padding:26px 16px 60px}
+  h1{font-size:22px;margin:0 0 20px;letter-spacing:.06em}
+  a.card{display:block;text-decoration:none;color:inherit;background:var(--card);
+    border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin:0 0 14px;
+    box-shadow:0 1px 0 #0000000a,0 6px 18px #00000012}
+  a.card:nth-child(odd){rotate:-.4deg} a.card:nth-child(even){rotate:.5deg}
+  .d{font-size:13px;color:var(--dim);letter-spacing:.08em}
+  .t{font-size:19px;font-weight:600;margin:3px 0 5px}
+  .b{font-size:14px;color:var(--dim)}
+  .tags{margin-top:9px;display:flex;gap:6px;flex-wrap:wrap}
+  .tags i{font-style:normal;font-size:12px;color:var(--dim);border:1px solid var(--line);border-radius:99px;padding:2px 9px}
+  .empty{color:var(--dim);text-align:center;padding:16vh 0}
+  #new{display:block;width:100%;margin-top:18px;padding:14px;border:1px dashed var(--line);
+    border-radius:10px;background:none;color:var(--dim);font-size:15px;cursor:pointer}
+</style></head><body>
+<div class="wrap"><h1>手帐</h1><div id="list"></div>
+<button id="new">开一页空白</button></div>
+<script>
+fetch('/api/pages').then(r=>r.json()).then(d=>{
+  var l=(d&&d.pages)||[], box=document.getElementById('list');
+  if(!l.length){ box.innerHTML='<div class="empty">还没有页面。<br>把一份 HTML 放进 data/pages/ 就行。</div>'; return; }
+  box.innerHTML=l.map(function(e){
+    return '<a class="card" href="/pages/'+encodeURIComponent(e.id)+'.html">'
+      +'<div class="d">'+e.date+(e.notes?'　·　批注 '+e.notes:'')+'</div>'
+      +'<div class="t">'+e.title+'</div>'
+      +(e.blurb?'<div class="b">'+e.blurb+'</div>':'')
+      +(e.tags.length?'<div class="tags">'+e.tags.map(function(t){return '<i>'+t+'</i>'}).join('')+'</div>':'')
+      +'</a>';
+  }).join('');
+});
+document.getElementById('new').onclick=function(){
+  var t=prompt('这一页叫什么？','还没起名字'); if(t===null) return;
+  fetch('/api/pages',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({title:t})}).then(r=>r.json()).then(d=>{
+      if(d&&d.page) location.href='/pages/'+d.page.id+'.html';
+    });
+};
+</script></body></html>
