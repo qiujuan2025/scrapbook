@@ -24,7 +24,11 @@ module.exports = function pages(dir, notes) {
       title: pick('title') || (t ? t[1].trim() : id),
       date: pick('date') || new Date(st.mtimeMs).toISOString().slice(0, 10),
       tags: pick('tags').split(/[,，\s]+/).filter(Boolean).slice(0, 8),
-      cover: pick('cover'),
+      // 没写 sb-cover 就拿页面里第一张图当封面 —— 忘了写的话书架上是个空框。
+      cover: pick('cover') || (function () {
+        const m = head.match(/<img[^>]+src=["'](\/[^"']+|https?:[^"']+)["']/i);
+        return m ? m[1] : '';
+      })(),
       blurb: pick('blurb'),
       notes: notes ? notes.list(id).length : 0,
       updated: Math.floor(st.mtimeMs / 1000),
