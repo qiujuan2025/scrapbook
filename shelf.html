@@ -12,6 +12,11 @@
     border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin:0 0 14px;
     box-shadow:0 1px 0 #0000000a,0 6px 18px #00000012}
   a.card:nth-child(odd){rotate:-.4deg} a.card:nth-child(even){rotate:.5deg}
+  a.card{display:flex;gap:14px;align-items:flex-start}
+  .cv{flex:0 0 92px;width:92px;height:92px;border-radius:6px;object-fit:cover;
+    border:1px solid var(--line);background:var(--bg)}
+  .cv.none{display:grid;place-items:center;color:var(--dim);font-size:20px;border-style:dashed}
+  .meta{min-width:0;flex:1}
   .d{font-size:13px;color:var(--dim);letter-spacing:.08em}
   .t{font-size:19px;font-weight:600;margin:3px 0 5px}
   .b{font-size:14px;color:var(--dim)}
@@ -29,11 +34,13 @@ fetch('/api/pages').then(r=>r.json()).then(d=>{
   if(!l.length){ box.innerHTML='<div class="empty">还没有页面。<br>把一份 HTML 放进 data/pages/ 就行。</div>'; return; }
   box.innerHTML=l.map(function(e){
     return '<a class="card" href="/pages/'+encodeURIComponent(e.id)+'.html">'
+      +(e.cover?'<img class="cv" src="'+e.cover+'" loading="lazy">':'<div class="cv none">✎</div>')
+      +'<div class="meta">'
       +'<div class="d">'+e.date+(e.notes?'　·　批注 '+e.notes:'')+'</div>'
       +'<div class="t">'+e.title+'</div>'
       +(e.blurb?'<div class="b">'+e.blurb+'</div>':'')
       +(e.tags.length?'<div class="tags">'+e.tags.map(function(t){return '<i>'+t+'</i>'}).join('')+'</div>':'')
-      +'</a>';
+      +'</div></a>';
   }).join('');
 });
 document.getElementById('new').onclick=function(){
