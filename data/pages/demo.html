@@ -1,0 +1,39 @@
+<!doctype html><meta charset="utf-8"><title>示例页</title>
+<meta name="sb-title" content="示例页">
+<meta name="sb-date" content="2026-09-06">
+<meta name="sb-tags" content="示例">
+<meta name="sb-blurb" content="作者写页面，读者往上贴批注">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  body{margin:0;background:#0e1013;color:#e8e4dc;font:16px/1.8 system-ui,sans-serif}
+  .wrap{max-width:680px;margin:0 auto;padding:10vh 22px 20vh}
+  h1{font-size:clamp(28px,7vw,46px);margin:.2em 0 .6em}
+  p{margin:0 0 1.4em;color:#c8ccd3}
+  figure{margin:0 0 2em}
+  figure img{width:100%;border-radius:4px;display:block}
+</style>
+<div class="wrap">
+  <h1 data-block="title">随便写点什么</h1>
+
+  <p data-block="p1">页面是作者写的，排版随作者高兴 —— flex、grid、动画、SVG，
+     怎么写都行。读者改不了这里的一个字。</p>
+
+  <figure data-block="fig">
+    <img src="https://placehold.co/900x420/1c1f24/6a6f78?text=any+content" alt="">
+  </figure>
+
+  <p data-block="p2">读者能做的是**往上贴**：便签、表情、贴纸、照片，随便拖。
+     松手时脚本会算出它压在哪个 <code>data-block</code> 上，存的是
+     「挂在 p2 上、偏移 12/-4」，不是纸上的绝对坐标。</p>
+
+  <p data-block="p3">所以作者把整页重写一遍 —— 换版式、调顺序、加东西 ——
+     只要 <code>data-block</code> 的名字还在，读者的话就还在它旁边。</p>
+</div>
+
+<script>
+  window.ANCHORED_NOTES = {
+    api: '/api/notes', patch: '/api/notes/patch', del: '/api/notes/del',
+    media: '/api/media', pageId: 'demo',
+  };
+</script>
+<script src="/anchored-notes.js"></script>
